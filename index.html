@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Propelix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#161616",
+              sand: "#f6f1e9",
+              mint: "#dcf8ef",
+              emerald: "#0f8f6f",
+              slate: "#52606d"
+            },
+            boxShadow: {
+              soft: "0 24px 80px rgba(15, 34, 26, 0.12)"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(15,143,111,0.12),_transparent_26%),radial-gradient(circle_at_top_right,_rgba(230,163,76,0.15),_transparent_22%),linear-gradient(180deg,_#faf7f3_0%,_#f4ede4_100%)] text-ink">
+    <div class="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 md:px-8">
+      <header class="mb-8 flex items-center justify-between rounded-full border border-white/70 bg-white/60 px-5 py-3 shadow-soft backdrop-blur">
+        <div class="flex items-center gap-3">
+          <div class="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-emerald via-teal-500 to-cyan-400 text-lg font-black text-white">P</div>
+          <div>
+            <p class="text-lg font-semibold tracking-tight">Propelix</p>
+            <p class="text-xs uppercase tracking-[0.22em] text-slate">HDB Seller Intelligence</p>
+          </div>
+        </div>
+        <p class="hidden text-sm text-slate md:block">Maximize resale profit. Compress time to sale.</p>
+      </header>
+
+      <main>
+        <section id="view-landing" class="view space-y-8">
+          <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div class="rounded-[2rem] border border-white/80 bg-white/70 p-8 shadow-soft backdrop-blur md:p-12">
+              <div class="mb-6 inline-flex items-center gap-3 rounded-full bg-mint px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald">
+                Seller-side AI disposition engine
+              </div>
+              <h1 class="max-w-3xl text-4xl font-black tracking-tight md:text-6xl md:leading-[1]">
+                Sell faster and at a better price without juggling portals yourself.
+              </h1>
+              <p class="mt-6 max-w-2xl text-lg leading-8 text-slate">
+                Propelix helps HDB owners input property details once, pulls comparable market data,
+                calculates a suggested best price, and then uses AI agents to publish the listing on
+                99.co.
+              </p>
+              <div class="mt-8 flex flex-wrap gap-4">
+                <button id="get-started-btn" class="rounded-2xl bg-emerald px-6 py-4 text-base font-semibold text-white transition hover:translate-y-[-1px] hover:bg-teal-700">
+                  Get Started
+                </button>
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-5 py-4 text-sm text-slate">
+                  Workflow: Profile → Analysis → Price Suggestion → Publish
+                </div>
+              </div>
+            </div>
+
+            <div class="grid gap-4">
+              <div class="rounded-[2rem] border border-white/80 bg-[#161616] p-6 text-white shadow-soft">
+                <p class="text-xs uppercase tracking-[0.24em] text-emerald/80">What it does</p>
+                <ul class="mt-5 space-y-4 text-sm leading-7 text-white/80">
+                  <li>Scrapes recent comparable HDB resale transactions via Tinyfish.</li>
+                  <li>Calculates a suggested seller price using a clear, auditable pricing rule.</li>
+                  <li>Logs into 99.co and automates listing creation on the owner’s behalf.</li>
+                </ul>
+              </div>
+              <div class="rounded-[2rem] border border-white/80 bg-white/70 p-6 shadow-soft backdrop-blur">
+                <p class="text-xs uppercase tracking-[0.24em] text-slate">Ideal user</p>
+                <p class="mt-4 text-sm leading-7 text-slate">
+                  HDB owners who want to avoid underpricing, reduce admin overhead, and move from
+                  intention to live listing with fewer manual steps.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-credentials" class="view hidden">
+          <div class="mx-auto max-w-3xl rounded-[2rem] border border-white/80 bg-white/75 p-8 shadow-soft backdrop-blur md:p-10">
+            <div class="mb-8">
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald">Step 1</p>
+              <h2 class="mt-3 text-3xl font-black tracking-tight">Demo 99.co automation account</h2>
+              <p class="mt-4 text-slate">
+                For this demo, Propelix uses a built-in 99.co account for agentic automation when
+                publishing your listing.
+              </p>
+            </div>
+
+            <form id="credentials-form" class="space-y-5">
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate">99.co Username</label>
+                <input id="credentials-username" type="text" required readonly class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition focus:border-emerald" value="80330402" />
+              </div>
+              <div>
+                <label class="mb-2 block text-sm font-medium text-slate">99.co Password</label>
+                <input id="credentials-password" type="password" required readonly class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none ring-0 transition focus:border-emerald" value="tinyfishisthebest" />
+              </div>
+              <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                Security note: this demo account is used purely for agentic automation to create the
+                listing on your behalf. The backend injects the credentials into the Tinyfish prompt
+                only when you explicitly publish.
+              </div>
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <p id="credentials-status" class="text-sm text-slate"></p>
+                <button type="submit" class="rounded-2xl bg-emerald px-6 py-3 font-semibold text-white transition hover:bg-teal-700">
+                  Continue to Property Profile
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section id="view-property" class="view hidden">
+          <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <div class="rounded-[2rem] border border-white/80 bg-white/75 p-8 shadow-soft backdrop-blur">
+              <div class="mb-8">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald">Step 2</p>
+                <h2 class="mt-3 text-3xl font-black tracking-tight">Build the property profile</h2>
+                <p class="mt-4 text-slate">
+                  Enter the details of the HDB flat you want Propelix to analyze and eventually publish.
+                </p>
+              </div>
+
+              <form id="property-form" class="space-y-5">
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-slate">Town</label>
+                    <input id="prop-town" type="text" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald" placeholder="BUKIT BATOK" />
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-slate">Block</label>
+                    <input id="prop-block" type="text" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald" placeholder="289C" />
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate">Street Name</label>
+                  <input id="prop-street" type="text" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald" placeholder="Bukit Batok Street 25" />
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-slate">Flat Type</label>
+                    <select id="prop-flat-type" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald">
+                      <option value="3 ROOM">3 ROOM</option>
+                      <option value="4 ROOM" selected>4 ROOM</option>
+                      <option value="5 ROOM">5 ROOM</option>
+                      <option value="EXECUTIVE">EXECUTIVE</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-slate">Initial Asking Price (Optional)</label>
+                    <input id="prop-asking" type="number" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald" placeholder="698000" />
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-slate">Property Photos</label>
+                  <input id="prop-photos" type="file" accept="image/*" multiple class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 focus:border-emerald" />
+                  <p class="mt-2 text-sm text-slate">Upload the listing photos you want associated with this property profile for the demo flow.</p>
+                </div>
+                <div id="photo-preview-grid" class="hidden grid gap-4 md:grid-cols-3"></div>
+                <button type="submit" id="analyze-btn" class="w-full rounded-2xl bg-emerald px-6 py-4 font-semibold text-white transition hover:bg-teal-700">
+                  Generate First Look Analysis
+                </button>
+              </form>
+            </div>
+
+            <div class="space-y-6">
+              <div class="rounded-[2rem] border border-white/80 bg-[#161616] p-8 text-white shadow-soft">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald/80">First Look Analysis</p>
+                    <h3 class="mt-2 text-2xl font-black tracking-tight">Suggested Best Price</h3>
+                  </div>
+                  <div id="job-badge" class="rounded-full bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.2em] text-white/80">Idle</div>
+                </div>
+
+                <div id="analysis-empty" class="mt-6 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm leading-7 text-white/70">
+                  Submit a property profile to launch Tinyfish, scrape comparable transactions, and calculate a suggested pricing position.
+                </div>
+
+                <div id="analysis-loading" class="mt-6 hidden rounded-3xl border border-emerald/20 bg-emerald/10 p-6">
+                  <div class="flex items-center gap-3">
+                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+                    <p class="text-sm font-medium text-white">Analyzing recent comparables via Tinyfish...</p>
+                  </div>
+                  <p class="mt-4 text-sm leading-7 text-white/70">This may take a moment. Propelix is polling the backend until the job completes.</p>
+                </div>
+
+                <div id="analysis-result" class="mt-6 hidden space-y-5">
+                  <div class="rounded-3xl bg-white/5 p-6">
+                    <p class="text-xs uppercase tracking-[0.22em] text-white/60">Suggested Best Price</p>
+                    <p id="suggested-price" class="mt-3 text-4xl font-black tracking-tight text-white"></p>
+                    <p id="pricing-method" class="mt-3 text-sm leading-7 text-white/70"></p>
+                  </div>
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div class="rounded-3xl bg-white/5 p-5">
+                      <p class="text-xs uppercase tracking-[0.22em] text-white/60">Average Comparable</p>
+                      <p id="average-price" class="mt-2 text-2xl font-bold text-white"></p>
+                    </div>
+                    <div class="rounded-3xl bg-white/5 p-5">
+                      <p class="text-xs uppercase tracking-[0.22em] text-white/60">Final Asking Price</p>
+                      <input id="final-price-input" type="number" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-lg font-semibold text-white placeholder:text-white/40" />
+                    </div>
+                  </div>
+                  <div class="rounded-3xl bg-white/5 p-5">
+                    <p class="text-xs uppercase tracking-[0.22em] text-white/60">Uploaded Photo Files</p>
+                    <p id="uploaded-photo-summary" class="mt-2 text-sm leading-7 text-white/80">No photos uploaded yet.</p>
+                  </div>
+                  <div class="rounded-3xl bg-white/5 p-5">
+                    <div class="mb-4 flex items-center justify-between gap-4">
+                      <p class="text-sm font-semibold text-white">Recent Comparables</p>
+                      <p class="text-xs uppercase tracking-[0.2em] text-white/50">Last scraped set</p>
+                    </div>
+                    <div id="comparables-list" class="space-y-3"></div>
+                  </div>
+                  <button id="publish-btn" class="w-full rounded-2xl bg-white px-6 py-4 font-semibold text-ink transition hover:bg-slate-100">
+                    Publish to 99.co via AI Agent
+                  </button>
+                </div>
+
+                <div id="publish-loading" class="mt-6 hidden rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-6 text-sm text-white/80">
+                  Publishing listing through Tinyfish. Propelix is polling the backend for the final listing result.
+                </div>
+
+                <div id="publish-result" class="mt-6 hidden rounded-3xl border border-emerald/20 bg-emerald/10 p-6">
+                  <p class="text-xs uppercase tracking-[0.22em] text-emerald-100">Publication Result</p>
+                  <p id="publish-status" class="mt-3 text-2xl font-bold text-white"></p>
+                  <a id="publish-url" class="mt-3 inline-block text-sm font-semibold text-emerald-100 underline underline-offset-4" href="#" target="_blank" rel="noreferrer"></a>
+                  <p id="publish-notes" class="mt-4 text-sm leading-7 text-white/80"></p>
+                </div>
+
+                <div id="job-error" class="mt-6 hidden rounded-3xl border border-rose-300/20 bg-rose-300/10 p-6 text-sm leading-7 text-rose-50"></div>
+              </div>
+
+              <div class="rounded-[2rem] border border-white/80 bg-white/75 p-6 shadow-soft backdrop-blur">
+                <div class="mb-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald">Live Job Logs</p>
+                    <h3 class="mt-2 text-xl font-black tracking-tight">Backend polling activity</h3>
+                  </div>
+                </div>
+                <div id="logs" class="max-h-[22rem] space-y-3 overflow-auto rounded-3xl bg-slate-50 p-4 text-sm text-slate"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const views = {
+        landing: document.getElementById("view-landing"),
+        credentials: document.getElementById("view-credentials"),
+        property: document.getElementById("view-property")
+      };
+
+      const state = {
+        credentials: JSON.parse(localStorage.getItem("propelix.credentials") || "null"),
+        property: null,
+        analysisJobId: null,
+        publishJobId: null,
+        suggestedPrice: null,
+        photoFiles: []
+      };
+
+      const logsEl = document.getElementById("logs");
+      const jobBadgeEl = document.getElementById("job-badge");
+      const analysisEmptyEl = document.getElementById("analysis-empty");
+      const analysisLoadingEl = document.getElementById("analysis-loading");
+      const analysisResultEl = document.getElementById("analysis-result");
+      const publishLoadingEl = document.getElementById("publish-loading");
+      const publishResultEl = document.getElementById("publish-result");
+      const jobErrorEl = document.getElementById("job-error");
+      const suggestedPriceEl = document.getElementById("suggested-price");
+      const averagePriceEl = document.getElementById("average-price");
+      const pricingMethodEl = document.getElementById("pricing-method");
+      const comparablesListEl = document.getElementById("comparables-list");
+      const finalPriceInputEl = document.getElementById("final-price-input");
+      const publishStatusEl = document.getElementById("publish-status");
+      const publishUrlEl = document.getElementById("publish-url");
+      const publishNotesEl = document.getElementById("publish-notes");
+      const photoPreviewGridEl = document.getElementById("photo-preview-grid");
+      const uploadedPhotoSummaryEl = document.getElementById("uploaded-photo-summary");
+
+      function formatCurrency(value) {
+        return new Intl.NumberFormat("en-SG", {
+          style: "currency",
+          currency: "SGD",
+          maximumFractionDigits: 0
+        }).format(value || 0);
+      }
+
+      function showView(name) {
+        Object.entries(views).forEach(([key, element]) => {
+          element.classList.toggle("hidden", key !== name);
+        });
+      }
+
+      function setJobBadge(label) {
+        jobBadgeEl.textContent = label;
+      }
+
+      function resetJobUi() {
+        analysisEmptyEl.classList.remove("hidden");
+        analysisLoadingEl.classList.add("hidden");
+        analysisResultEl.classList.add("hidden");
+        publishLoadingEl.classList.add("hidden");
+        publishResultEl.classList.add("hidden");
+        jobErrorEl.classList.add("hidden");
+        jobErrorEl.textContent = "";
+        logsEl.innerHTML = "";
+        setJobBadge("Idle");
+      }
+
+      function renderLogs(logs) {
+        logsEl.innerHTML = "";
+        if (!logs || logs.length === 0) {
+          logsEl.innerHTML = '<p class="text-sm text-slate-400">No logs yet.</p>';
+          return;
+        }
+        logs.forEach((log) => {
+          const item = document.createElement("div");
+          item.className = "rounded-2xl border border-slate-200 bg-white px-4 py-3";
+          item.innerHTML = `<p class="text-xs uppercase tracking-[0.18em] text-slate-400">${new Date(log.timestamp).toLocaleTimeString()}</p><p class="mt-1 text-sm text-slate-700">${log.message}</p>`;
+          logsEl.appendChild(item);
+        });
+      }
+
+      function renderPhotoPreviews(files) {
+        photoPreviewGridEl.innerHTML = "";
+        if (!files.length) {
+          photoPreviewGridEl.classList.add("hidden");
+          uploadedPhotoSummaryEl.textContent = "No photos uploaded yet.";
+          return;
+        }
+        uploadedPhotoSummaryEl.textContent = files.map((file) => file.name).join(", ");
+        photoPreviewGridEl.classList.remove("hidden");
+        files.forEach((file) => {
+          const card = document.createElement("div");
+          card.className = "overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm";
+          const imageUrl = URL.createObjectURL(file);
+          card.innerHTML = `<img src="${imageUrl}" alt="${file.name}" class="h-40 w-full object-cover" /><div class="px-4 py-3 text-sm text-slate-700">${file.name}</div>`;
+          photoPreviewGridEl.appendChild(card);
+        });
+      }
+
+      async function pollJob(jobId, onComplete) {
+        const intervalId = setInterval(async () => {
+          try {
+            const response = await fetch(`/api/jobs/${jobId}`);
+            const job = await response.json();
+            renderLogs(job.logs);
+            setJobBadge(job.status);
+            if (job.status === "completed") {
+              clearInterval(intervalId);
+              onComplete(job);
+            }
+            if (job.status === "failed") {
+              clearInterval(intervalId);
+              analysisLoadingEl.classList.add("hidden");
+              publishLoadingEl.classList.add("hidden");
+              jobErrorEl.classList.remove("hidden");
+              jobErrorEl.textContent = job.error || "Something went wrong.";
+            }
+          } catch (error) {
+            clearInterval(intervalId);
+            jobErrorEl.classList.remove("hidden");
+            jobErrorEl.textContent = error.message || "Polling failed.";
+          }
+        }, 2000);
+      }
+
+      document.getElementById("get-started-btn").addEventListener("click", () => {
+        showView("credentials");
+      });
+
+      document.getElementById("credentials-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const username = document.getElementById("credentials-username").value.trim();
+        const password = document.getElementById("credentials-password").value;
+        state.credentials = { username, password };
+        localStorage.setItem("propelix.credentials", JSON.stringify(state.credentials));
+        document.getElementById("credentials-status").textContent = "Credentials saved for this browser session.";
+        showView("property");
+      });
+
+      document.getElementById("prop-photos").addEventListener("change", (event) => {
+        state.photoFiles = Array.from(event.target.files || []);
+        renderPhotoPreviews(state.photoFiles);
+      });
+
+      document.getElementById("property-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        state.property = {
+          town: document.getElementById("prop-town").value.trim(),
+          block: document.getElementById("prop-block").value.trim(),
+          street_name: document.getElementById("prop-street").value.trim(),
+          flat_type: document.getElementById("prop-flat-type").value,
+          initial_asking_price: document.getElementById("prop-asking").value ? Number(document.getElementById("prop-asking").value) : null,
+          photo_names: state.photoFiles.map((file) => file.name)
+        };
+        resetJobUi();
+        analysisEmptyEl.classList.add("hidden");
+        analysisLoadingEl.classList.remove("hidden");
+        setJobBadge("Running");
+
+        const response = await fetch("/api/analyze-price/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state.property)
+        });
+        const payload = await response.json();
+        state.analysisJobId = payload.job_id;
+        pollJob(payload.job_id, (job) => {
+          analysisLoadingEl.classList.add("hidden");
+          analysisResultEl.classList.remove("hidden");
+          state.suggestedPrice = job.result.suggested_price;
+          suggestedPriceEl.textContent = formatCurrency(job.result.suggested_price);
+          averagePriceEl.textContent = formatCurrency(job.result.average_transacted_price);
+          pricingMethodEl.textContent = job.result.pricing_method;
+          finalPriceInputEl.value = Math.round(job.result.suggested_price);
+          uploadedPhotoSummaryEl.textContent = state.photoFiles.length ? state.photoFiles.map((file) => file.name).join(", ") : "No photos uploaded yet.";
+          comparablesListEl.innerHTML = "";
+          (job.result.comparables || []).forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white";
+            row.innerHTML = `<div class="flex items-center justify-between gap-4"><div><p class="font-semibold">${item.block || "-"} ${item.street_name || ""}</p><p class="mt-1 text-xs uppercase tracking-[0.18em] text-white/50">${item.transaction_month || "-"} · ${item.flat_type || "-"}</p></div><p class="text-base font-bold">${formatCurrency(item.resale_price_sgd)}</p></div>`;
+            comparablesListEl.appendChild(row);
+          });
+        });
+      });
+
+      document.getElementById("publish-btn").addEventListener("click", async () => {
+        if (!state.credentials) {
+          showView("credentials");
+          return;
+        }
+        jobErrorEl.classList.add("hidden");
+        publishResultEl.classList.add("hidden");
+        publishLoadingEl.classList.remove("hidden");
+        setJobBadge("Publishing");
+
+        const response = await fetch("/api/publish-listing/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            credentials: state.credentials,
+            property_details: state.property,
+            finalized_asking_price: Number(finalPriceInputEl.value)
+          })
+        });
+        const payload = await response.json();
+        state.publishJobId = payload.job_id;
+        pollJob(payload.job_id, (job) => {
+          publishLoadingEl.classList.add("hidden");
+          publishResultEl.classList.remove("hidden");
+          publishStatusEl.textContent = job.result.listing_status || "completed";
+          publishNotesEl.textContent = job.result.notes || "";
+          if (job.result.public_url) {
+            publishUrlEl.href = job.result.public_url;
+            publishUrlEl.textContent = job.result.public_url;
+            publishUrlEl.classList.remove("hidden");
+          } else {
+            publishUrlEl.classList.add("hidden");
+          }
+        });
+      });
+
+      if (state.credentials) {
+        document.getElementById("credentials-username").value = state.credentials.username || "";
+        document.getElementById("credentials-password").value = state.credentials.password || "";
+      } else {
+        state.credentials = { username: "80330402", password: "tinyfishisthebest" };
+        localStorage.setItem("propelix.credentials", JSON.stringify(state.credentials));
+      }
+
+      resetJobUi();
+      showView("landing");
+    </script>
+  </body>
+</html>

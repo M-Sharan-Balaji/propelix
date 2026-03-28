@@ -1,0 +1,22 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "agentqlApiKey",
+      "description": "AgentQL API Key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "agentql": {
+      "command": "npx.cmd",
+      "args": ["-y", "agentql-mcp"],
+      "env": {
+        "AGENTQL_API_KEY": "${input:agentqlApiKey}"
+      }
+    },
+    "tinyfish": {
+      "url": "https://agent.tinyfish.ai/mcp"
+    }
+  }
+}
