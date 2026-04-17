@@ -1,53 +1,70 @@
-# Tinyfish HDB Seller Intelligence
+# Propelix
 
-An MVP full-stack hackathon product for a Singapore HDB seller intelligence platform. The app is built as a Next.js dashboard with:
+Propelix is a FastAPI + vanilla JavaScript MVP for HDB resale sellers. It helps an owner:
 
-- valuation, liquidity, proceeds, and trend intelligence
-- TinyFish-powered live web scraping orchestration
-- a live embedded browser preview driven by TinyFish `STREAMING_URL`
-- TinyFish runs history surfaced inside the product
+- enter their property details once
+- analyze comparable listings on `99.co`
+- review a suggested asking price
+- confirm the exact posting price
+- publish to `99.co` through a TinyFish automation agent
+
+The UI also includes a live TinyFish browser preview so judges can watch the agent work during both the analysis and publish flows.
 
 ## Stack
 
-- Next.js App Router
-- TypeScript
-- Server-side report generation
-- PostGIS-ready SQL schema for future production data pipelines
+- FastAPI
+- Vanilla JavaScript SPA
+- Tailwind CSS via CDN
+- TinyFish automation API
 
 ## Local setup
 
-1. Install dependencies:
+1. Install Python dependencies:
 
 ```bash
-npm install
+pip install -r requirements.txt
 ```
 
-2. Add environment variables:
+2. Add your TinyFish API key:
 
 ```bash
 TINYFISH_API_KEY=your_tinyfish_api_key
-AGENTQL_API_KEY=your_agentql_api_key
 ```
 
 3. Start the app:
 
 ```bash
-npm run dev
+uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-4. Open `http://localhost:3000`
+4. Open `http://127.0.0.1:8000`
 
-## API
+## Render deployment
 
-- `GET /api/report`
+This repo now includes a Render blueprint at [`render.yaml`](./render.yaml).
+
+Manual Render settings if you create the service in the UI:
+
+- Runtime: `Python`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- Plan: `Free`
+
+Required environment variable:
+
+- `TINYFISH_API_KEY`
+
+## API routes
+
+- `GET /`
+- `GET /health`
+- `POST /api/analyze-price/start`
+- `POST /api/publish-listing/start`
+- `GET /api/jobs/{job_id}`
 - `POST /api/tinyfish/stream`
-- `GET /api/tinyfish/runs`
 
-Returns the computed seller intelligence report backing the dashboard.
+## Important MVP notes
 
-## TinyFish integration
-
-- TinyFish live SSE automations are proxied through the backend so your API key stays server-side.
-- The dashboard includes presets for PropertyGuru, 99.co, and Data.gov.sg-oriented runs.
-- When TinyFish emits a `STREAMING_URL`, the app embeds it in an iframe so you can watch the agent work live.
-- Workspace MCP config also includes the TinyFish MCP endpoint at `https://agent.tinyfish.ai/mcp`.
+- Jobs are stored in memory, so they reset when the service restarts.
+- Free Render services spin down on idle, so the first request after inactivity can be slow.
+- The current flow is `99.co` only.

@@ -66,7 +66,7 @@
               <div class="rounded-[2rem] border border-white/80 bg-[#161616] p-6 text-white shadow-soft">
                 <p class="text-xs uppercase tracking-[0.24em] text-emerald/80">What it does</p>
                 <ul class="mt-5 space-y-4 text-sm leading-7 text-white/80">
-                  <li>Scrapes recent comparable HDB resale transactions via Tinyfish.</li>
+                  <li>Scrapes comparable HDB resale listings on 99.co via Tinyfish.</li>
                   <li>Calculates a suggested seller price using a clear, auditable pricing rule.</li>
                   <li>Logs into 99.co and automates listing creation on the owner’s behalf.</li>
                 </ul>
@@ -187,9 +187,19 @@
                 <div id="analysis-loading" class="mt-6 hidden rounded-3xl border border-emerald/20 bg-emerald/10 p-6">
                   <div class="flex items-center gap-3">
                     <div class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
-                    <p class="text-sm font-medium text-white">Analyzing recent comparables via Tinyfish...</p>
+                    <p class="text-sm font-medium text-white">Analyzing 99.co comparables via Tinyfish...</p>
                   </div>
                   <p class="mt-4 text-sm leading-7 text-white/70">This may take a moment. Propelix is polling the backend until the job completes.</p>
+                  <div class="mt-5 rounded-3xl border border-white/10 bg-black/20 p-4">
+                    <div class="mb-3 flex items-center justify-between gap-4">
+                      <p class="text-sm font-semibold text-white">Live Tinyfish browser</p>
+                      <p class="text-xs uppercase tracking-[0.2em] text-white/50">Analysis run</p>
+                    </div>
+                    <iframe id="analysis-live-frame" class="hidden h-[380px] w-full rounded-2xl border border-white/10 bg-white/5" title="Tinyfish analysis live preview"></iframe>
+                    <div id="analysis-live-placeholder" class="grid h-[220px] place-items-center rounded-2xl border border-dashed border-white/10 text-sm text-white/50">
+                      Waiting for Tinyfish live preview...
+                    </div>
+                  </div>
                 </div>
 
                 <div id="analysis-result" class="mt-6 hidden space-y-5">
@@ -208,13 +218,25 @@
                       <input id="final-price-input" type="number" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-lg font-semibold text-white placeholder:text-white/40" />
                     </div>
                   </div>
+                  <div id="confirm-price-section" class="hidden rounded-3xl border border-emerald/20 bg-emerald/10 p-5">
+                    <p class="text-xs uppercase tracking-[0.22em] text-emerald-100">Seller Confirmation</p>
+                    <p class="mt-3 text-sm leading-7 text-white/90">
+                      Review the analysis, choose the exact price you want, and confirm it before Propelix posts to 99.co.
+                    </p>
+                    <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <p id="confirmed-price-text" class="text-sm font-semibold text-white/90"></p>
+                      <button id="confirm-price-btn" class="rounded-2xl bg-emerald px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-700">
+                        Confirm Price for Posting
+                      </button>
+                    </div>
+                  </div>
                   <div class="rounded-3xl bg-white/5 p-5">
                     <p class="text-xs uppercase tracking-[0.22em] text-white/60">Uploaded Photo Files</p>
                     <p id="uploaded-photo-summary" class="mt-2 text-sm leading-7 text-white/80">No photos uploaded yet.</p>
                   </div>
                   <div class="rounded-3xl bg-white/5 p-5">
                     <div class="mb-4 flex items-center justify-between gap-4">
-                      <p class="text-sm font-semibold text-white">Recent Comparables</p>
+                      <p class="text-sm font-semibold text-white">99.co Comparables</p>
                       <p class="text-xs uppercase tracking-[0.2em] text-white/50">Last scraped set</p>
                     </div>
                     <div id="comparables-list" class="space-y-3"></div>
@@ -226,6 +248,16 @@
 
                 <div id="publish-loading" class="mt-6 hidden rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-6 text-sm text-white/80">
                   Publishing listing through Tinyfish. Propelix is polling the backend for the final listing result.
+                  <div class="mt-5 rounded-3xl border border-white/10 bg-black/20 p-4">
+                    <div class="mb-3 flex items-center justify-between gap-4">
+                      <p class="text-sm font-semibold text-white">Live Tinyfish browser</p>
+                      <p class="text-xs uppercase tracking-[0.2em] text-white/50">99.co publishing</p>
+                    </div>
+                    <iframe id="publish-live-frame" class="hidden h-[420px] w-full rounded-2xl border border-white/10 bg-white/5" title="Tinyfish publish live preview"></iframe>
+                    <div id="publish-live-placeholder" class="grid h-[220px] place-items-center rounded-2xl border border-dashed border-white/10 text-sm text-white/50">
+                      Waiting for Tinyfish live preview...
+                    </div>
+                  </div>
                 </div>
 
                 <div id="publish-result" class="mt-6 hidden rounded-3xl border border-emerald/20 bg-emerald/10 p-6">
@@ -265,7 +297,8 @@
         analysisJobId: null,
         publishJobId: null,
         suggestedPrice: null,
-        photoFiles: []
+        photoFiles: [],
+        confirmedFinalPrice: null
       };
 
       const logsEl = document.getElementById("logs");
@@ -281,11 +314,19 @@
       const pricingMethodEl = document.getElementById("pricing-method");
       const comparablesListEl = document.getElementById("comparables-list");
       const finalPriceInputEl = document.getElementById("final-price-input");
+      const confirmPriceSectionEl = document.getElementById("confirm-price-section");
+      const confirmedPriceTextEl = document.getElementById("confirmed-price-text");
       const publishStatusEl = document.getElementById("publish-status");
       const publishUrlEl = document.getElementById("publish-url");
       const publishNotesEl = document.getElementById("publish-notes");
       const photoPreviewGridEl = document.getElementById("photo-preview-grid");
       const uploadedPhotoSummaryEl = document.getElementById("uploaded-photo-summary");
+      const analysisLiveFrameEl = document.getElementById("analysis-live-frame");
+      const analysisLivePlaceholderEl = document.getElementById("analysis-live-placeholder");
+      const publishLiveFrameEl = document.getElementById("publish-live-frame");
+      const publishLivePlaceholderEl = document.getElementById("publish-live-placeholder");
+      let analysisPreviewController = null;
+      let publishPreviewController = null;
 
       function formatCurrency(value) {
         return new Intl.NumberFormat("en-SG", {
@@ -313,8 +354,134 @@
         publishResultEl.classList.add("hidden");
         jobErrorEl.classList.add("hidden");
         jobErrorEl.textContent = "";
+        confirmPriceSectionEl.classList.add("hidden");
+        confirmedPriceTextEl.textContent = "";
+        state.confirmedFinalPrice = null;
         logsEl.innerHTML = "";
         setJobBadge("Idle");
+        analysisLiveFrameEl.classList.add("hidden");
+        analysisLiveFrameEl.removeAttribute("src");
+        analysisLivePlaceholderEl.classList.remove("hidden");
+        publishLiveFrameEl.classList.add("hidden");
+        publishLiveFrameEl.removeAttribute("src");
+        publishLivePlaceholderEl.classList.remove("hidden");
+      }
+
+      function updateLiveFrame(mode, streamingUrl) {
+        if (!streamingUrl) {
+          return;
+        }
+
+        if (mode === "analysis") {
+          if (analysisLiveFrameEl.src !== streamingUrl) {
+            analysisLiveFrameEl.src = streamingUrl;
+          }
+          analysisLiveFrameEl.classList.remove("hidden");
+          analysisLivePlaceholderEl.classList.add("hidden");
+          return;
+        }
+
+        if (publishLiveFrameEl.src !== streamingUrl) {
+          publishLiveFrameEl.src = streamingUrl;
+        }
+        publishLiveFrameEl.classList.remove("hidden");
+        publishLivePlaceholderEl.classList.add("hidden");
+      }
+
+      function parseSseChunk(buffer) {
+        const segments = buffer.split("\n\n");
+        const remainder = segments.pop() || "";
+        const events = segments
+          .map((segment) => {
+            const lines = segment.split("\n");
+            let event = "message";
+            const dataLines = [];
+            lines.forEach((rawLine) => {
+              const line = rawLine.trimEnd();
+              if (line.startsWith("event:")) {
+                event = line.slice(6).trim();
+              }
+              if (line.startsWith("data:")) {
+                dataLines.push(line.slice(5).trim());
+              }
+            });
+            return { event, data: dataLines.join("\n") };
+          })
+          .filter((entry) => entry.data.length > 0);
+        return { events, remainder };
+      }
+
+      function tryParseJson(value) {
+        try {
+          return JSON.parse(value);
+        } catch {
+          return { message: value, type: "MESSAGE" };
+        }
+      }
+
+      function getStreamingUrlFromEvent(payload) {
+        return (
+          payload?.streaming_url ||
+          payload?.streamingUrl ||
+          payload?.data?.streaming_url ||
+          payload?.data?.streamingUrl ||
+          payload?.result?.streaming_url ||
+          payload?.result?.streamingUrl ||
+          null
+        );
+      }
+
+      async function startTinyFishPreview(mode, url, goal) {
+        const controller = new AbortController();
+        if (mode === "analysis") {
+          analysisPreviewController?.abort();
+          analysisPreviewController = controller;
+        } else {
+          publishPreviewController?.abort();
+          publishPreviewController = controller;
+        }
+
+        try {
+          const response = await fetch("/api/tinyfish/stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url,
+              goal,
+              browser_profile: "stealth",
+              proxy_config: { enabled: false }
+            }),
+            signal: controller.signal
+          });
+
+          if (!response.ok || !response.body) {
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const parsed = parseSseChunk(buffer);
+            buffer = parsed.remainder;
+
+            parsed.events.forEach((sseEvent) => {
+              const payload = tryParseJson(sseEvent.data);
+              const streamingUrl = getStreamingUrlFromEvent(payload);
+              if (streamingUrl) {
+                updateLiveFrame(mode, String(streamingUrl));
+              }
+            });
+          }
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            console.error("TinyFish preview failed", error);
+          }
+        }
       }
 
       function renderLogs(logs) {
@@ -349,13 +516,14 @@
         });
       }
 
-      async function pollJob(jobId, onComplete) {
+      async function pollJob(jobId, mode, onComplete) {
         const intervalId = setInterval(async () => {
           try {
             const response = await fetch(`/api/jobs/${jobId}`);
             const job = await response.json();
             renderLogs(job.logs);
             setJobBadge(job.status);
+            updateLiveFrame(mode, getStreamingUrlFromEvent(job) || getStreamingUrlFromEvent(job.result?.tinyfish_run));
             if (job.status === "completed") {
               clearInterval(intervalId);
               onComplete(job);
@@ -409,6 +577,9 @@
         analysisLoadingEl.classList.remove("hidden");
         setJobBadge("Running");
 
+        const analysisGoal = `You are an automated research assistant for Singapore HDB resale sellers. Navigate to 99.co and gather the 5 most relevant comparable HDB resale listings for Town ${state.property.town}, Block ${state.property.block}, Street Name ${state.property.street_name}, Flat Type ${state.property.flat_type}. Return only valid JSON with comparable listing references and resale_price_sgd estimates.`;
+        startTinyFishPreview("analysis", "https://www.99.co/singapore/sale", analysisGoal);
+
         const response = await fetch("/api/analyze-price/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -416,14 +587,17 @@
         });
         const payload = await response.json();
         state.analysisJobId = payload.job_id;
-        pollJob(payload.job_id, (job) => {
+        pollJob(payload.job_id, "analysis", (job) => {
           analysisLoadingEl.classList.add("hidden");
           analysisResultEl.classList.remove("hidden");
           state.suggestedPrice = job.result.suggested_price;
+          state.confirmedFinalPrice = null;
           suggestedPriceEl.textContent = formatCurrency(job.result.suggested_price);
           averagePriceEl.textContent = formatCurrency(job.result.average_transacted_price);
           pricingMethodEl.textContent = job.result.pricing_method;
           finalPriceInputEl.value = Math.round(job.result.suggested_price);
+          confirmPriceSectionEl.classList.remove("hidden");
+          confirmedPriceTextEl.textContent = "No price confirmed yet.";
           uploadedPhotoSummaryEl.textContent = state.photoFiles.length ? state.photoFiles.map((file) => file.name).join(", ") : "No photos uploaded yet.";
           comparablesListEl.innerHTML = "";
           (job.result.comparables || []).forEach((item) => {
@@ -435,9 +609,27 @@
         });
       });
 
+      document.getElementById("confirm-price-btn").addEventListener("click", () => {
+        const chosenPrice = Number(finalPriceInputEl.value);
+        if (!chosenPrice || chosenPrice <= 0) {
+          jobErrorEl.classList.remove("hidden");
+          jobErrorEl.textContent = "Enter a valid asking price before confirming.";
+          return;
+        }
+
+        state.confirmedFinalPrice = chosenPrice;
+        jobErrorEl.classList.add("hidden");
+        confirmedPriceTextEl.textContent = `Confirmed posting price: ${formatCurrency(chosenPrice)}`;
+      });
+
       document.getElementById("publish-btn").addEventListener("click", async () => {
         if (!state.credentials) {
           showView("credentials");
+          return;
+        }
+        if (!state.confirmedFinalPrice) {
+          jobErrorEl.classList.remove("hidden");
+          jobErrorEl.textContent = "Confirm the price you want to post before publishing to 99.co.";
           return;
         }
         jobErrorEl.classList.add("hidden");
@@ -445,18 +637,21 @@
         publishLoadingEl.classList.remove("hidden");
         setJobBadge("Publishing");
 
+        const publishGoal = `You are an automated real estate assistant. Navigate to 99.co and log in using the provided credentials. 99.co login details for this demo: Username ${state.credentials.username}, Password ${state.credentials.password}. Create a listing using Block ${state.property.block}, Street ${state.property.street_name}, Town ${state.property.town}, Flat Type ${state.property.flat_type}, Asking Price SGD ${Number(state.confirmedFinalPrice).toFixed(0)}.`;
+        startTinyFishPreview("publish", "https://www.99.co/singapore/sale", publishGoal);
+
         const response = await fetch("/api/publish-listing/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             credentials: state.credentials,
             property_details: state.property,
-            finalized_asking_price: Number(finalPriceInputEl.value)
+            finalized_asking_price: Number(state.confirmedFinalPrice)
           })
         });
         const payload = await response.json();
         state.publishJobId = payload.job_id;
-        pollJob(payload.job_id, (job) => {
+        pollJob(payload.job_id, "publish", (job) => {
           publishLoadingEl.classList.add("hidden");
           publishResultEl.classList.remove("hidden");
           publishStatusEl.textContent = job.result.listing_status || "completed";

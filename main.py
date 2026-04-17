@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import re
 import statistics
 import uuid
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ from pydantic import BaseModel, Field
 APP_ROOT = Path(__file__).resolve().parent
 INDEX_FILE = APP_ROOT / "index.html"
 TINYFISH_API_URL = "https://agent.tinyfish.ai/v1/automation/run"
+TINYFISH_SSE_API_URL = "https://agent.tinyfish.ai/v1/automation/run-sse"
 
 
 def load_env_value(key: str, default: str = "") -> str:
@@ -81,6 +83,8 @@ def create_job(job_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         "logs": [],
         "result": None,
         "error": None,
+        "streaming_url": None,
+        "tinyfish_run_id": None,
     }
     JOBS[job_id] = job
     return job
@@ -146,6 +150,129 @@ def find_numeric_prices(payload: Any) -> list[float]:
     return [price for price in prices if price > 0]
 
 
+def normalize_comparables(payload: dict[str, Any]) -> tuple[list[dict[str, Any]], list[float]]:
+    raw_items = payload.get("comparables")
+    if not isinstance(raw_items, list):
+        raw_items = payload.get("listings")
+    if not isinstance(raw_items, list):
+        raw_items = payload.get("results")
+    if not isinstance(raw_items, list):
+        raw_items = []
+
+    normalized: list[dict[str, Any]] = []
+    prices: list[float] = []
+
+    for index, item in enumerate(raw_items):
+        if not isinstance(item, dict):
+            continue
+
+        raw_price = (
+            item.get("resale_price_sgd")
+            or item.get("asking_price_sgd")
+            or item.get("current_asking_sgd")
+            or item.get("price")
+            or item.get("price_sgd")
+        )
+
+        try:
+            price_value = float(raw_price)
+        except (TypeError, ValueError):
+            price_value = 0.0
+
+        if price_value > 0:
+            prices.append(price_value)
+
+        normalized.append(
+            {
+                "listing_reference": item.get("listing_reference")
+                or item.get("external_listing_id")
+                or item.get("title")
+                or f"listing-{index + 1}",
+                "transaction_month": item.get("transaction_month") or item.get("month") or "Current",
+                "block": item.get("block") or item.get("property_details", {}).get("block") or "-",
+                "street_name": item.get("street_name") or item.get("street") or "-",
+                "flat_type": item.get("flat_type") or item.get("property_details", {}).get("flat_type") or "-",
+                "resale_price_sgd": price_value,
+            }
+        )
+
+    if not prices:
+        prices = find_numeric_prices(payload)
+
+    return normalized, prices
+
+
+def parse_analysis_result(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return raw
+
+    if isinstance(raw, str):
+        stripped = raw.strip()
+        try:
+            parsed = json.loads(stripped)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+
+        prices = []
+        for match in re.findall(r"(?:SGD|S\\$|\\$)?\\s*([0-9]{3,}(?:,[0-9]{3})+|[0-9]{5,7})", stripped):
+            try:
+                prices.append(float(match.replace(",", "")))
+            except ValueError:
+                continue
+
+        comparables = [
+            {
+                "listing_reference": f"listing-{index + 1}",
+                "block": "-",
+                "street_name": "-",
+                "flat_type": "-",
+                "resale_price_sgd": price,
+            }
+            for index, price in enumerate(prices[:5])
+        ]
+        return {"comparables": comparables}
+
+    return {"comparables": []}
+
+
+def parse_publish_result(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return {
+            "listing_status": raw.get("listing_status") or raw.get("status") or "submitted",
+            "public_url": raw.get("public_url") or raw.get("url") or raw.get("listing_url"),
+            "notes": raw.get("notes") or raw.get("message") or "Tinyfish completed the 99.co publish flow.",
+        }
+
+    if isinstance(raw, str):
+        stripped = raw.strip()
+        try:
+            parsed = json.loads(stripped)
+            return parse_publish_result(parsed)
+        except json.JSONDecodeError:
+            url_match = re.search(r"https?://[^\s\"'>]+", stripped)
+            lowered = stripped.lower()
+            if "live" in lowered or "published" in lowered:
+                status = "live"
+            elif "draft" in lowered:
+                status = "draft"
+            else:
+                status = "submitted"
+
+            return {
+                "listing_status": status,
+                "public_url": url_match.group(0) if url_match else None,
+                "notes": stripped or "Tinyfish completed the 99.co publish flow.",
+            }
+
+    return {
+        "listing_status": "submitted",
+        "public_url": None,
+        "notes": "Tinyfish completed the 99.co publish flow.",
+    }
+
+
 async def run_tinyfish(url: str, goal: str) -> dict[str, Any]:
     api_key = ensure_tinyfish_key()
     payload = {
@@ -166,7 +293,7 @@ async def run_tinyfish(url: str, goal: str) -> dict[str, Any]:
 def build_analysis_prompt(property_details: PropertyDetails) -> str:
     return f"""
 You are an automated research assistant for Singapore HDB resale sellers.
-Navigate to the HDB resale transaction portal and gather the 5 most recent comparable HDB resale transactions.
+Navigate to 99.co and gather the 5 most relevant comparable HDB resale listings for the target property.
 
 Target property:
 - Town: {property_details.town}
@@ -174,12 +301,12 @@ Target property:
 - Street Name: {property_details.street_name}
 - Flat Type: {property_details.flat_type}
 
-Find the 5 most recent comparable transactions that best match this property.
+Find the 5 most relevant comparable listings that best match this property and estimate comparable asking-price references from the visible listings.
 Return ONLY valid JSON in this exact shape:
 {{
   "comparables": [
     {{
-      "transaction_month": "YYYY-MM",
+      "listing_reference": "string",
       "block": "string",
       "street_name": "string",
       "flat_type": "string",
@@ -224,19 +351,12 @@ async def analyze_price_job(job_id: str, payload: AnalyzePriceRequest) -> None:
         set_job_status(job_id, "running")
         append_log(job_id, "Starting Tinyfish analysis for recent comparables.")
         prompt = build_analysis_prompt(payload)
-        tinyfish_response = await run_tinyfish(
-            "https://services2.hdb.gov.sg/webapp/BB33RTIS/",
-            prompt,
-        )
+        tinyfish_response = await run_tinyfish("https://www.99.co/singapore/sale", prompt)
         append_log(job_id, "Tinyfish scraping completed. Parsing comparable transactions.")
 
         raw_result = tinyfish_response.get("result") or tinyfish_response.get("data") or {}
-        parsed_result = extract_json_payload(raw_result)
-        comparables = parsed_result.get("comparables", [])
-        prices = [item.get("resale_price_sgd") for item in comparables if item.get("resale_price_sgd")]
-
-        if len(prices) < 1:
-            prices = find_numeric_prices(parsed_result)
+        parsed_result = parse_analysis_result(raw_result)
+        comparables, prices = normalize_comparables(parsed_result)
 
         if len(prices) < 1:
             raise ValueError("No comparable transaction prices were returned by Tinyfish.")
@@ -281,7 +401,7 @@ async def publish_listing_job(job_id: str, payload: PublishListingRequest) -> No
         append_log(job_id, "Tinyfish listing automation completed. Parsing publication result.")
 
         raw_result = tinyfish_response.get("result") or tinyfish_response.get("data") or {}
-        parsed_result = extract_json_payload(raw_result)
+        parsed_result = parse_publish_result(raw_result)
 
         complete_job(
             job_id,
@@ -324,6 +444,34 @@ async def start_publish_listing(request: PublishListingRequest) -> dict[str, str
     append_log(job["job_id"], "Listing publication job queued.")
     asyncio.create_task(publish_listing_job(job["job_id"], request))
     return {"job_id": job["job_id"], "status": job["status"]}
+
+
+@app.post("/api/tinyfish/stream")
+async def tinyfish_stream_proxy(payload: dict[str, Any]) -> Any:
+    api_key = ensure_tinyfish_key()
+    upstream_payload = {
+        "url": payload.get("url"),
+        "goal": payload.get("goal"),
+        "browser_profile": payload.get("browser_profile", "stealth"),
+        "proxy_config": payload.get("proxy_config", {"enabled": False}),
+        "api_integration": "propelix-fastapi-demo",
+    }
+    headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+
+    async def iterator():
+        async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=30.0)) as client:
+            async with client.stream("POST", TINYFISH_SSE_API_URL, headers=headers, json=upstream_payload) as response:
+                response.raise_for_status()
+                async for chunk in response.aiter_bytes():
+                    yield chunk
+
+    from fastapi.responses import StreamingResponse
+
+    return StreamingResponse(
+        iterator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
 
 
 @app.get("/api/jobs/{job_id}")
