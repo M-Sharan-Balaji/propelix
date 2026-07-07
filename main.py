@@ -11,6 +11,7 @@ from typing import Any
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from mythos_router import router as mythos_router
 from pydantic import BaseModel, Field
 
 
@@ -41,6 +42,7 @@ DEMO_99CO_PASSWORD = "tinyfishisthebest"
 JOBS: dict[str, dict[str, Any]] = {}
 
 app = FastAPI(title="Propelix", version="1.0.0")
+app.include_router(mythos_router)
 
 
 class PropertyDetails(BaseModel):

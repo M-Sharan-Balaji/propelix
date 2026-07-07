@@ -298,8 +298,44 @@
         publishJobId: null,
         suggestedPrice: null,
         photoFiles: [],
-        confirmedFinalPrice: null
+        confirmedFinalPrice: null,
+        mythosSession: null
       };
+
+      async function initMythosFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const launchToken = params.get("lt");
+        if (!launchToken) return;
+
+        try {
+          const response = await fetch(`/api/mythos/session?lt=${encodeURIComponent(launchToken)}`);
+          if (!response.ok) return;
+          state.mythosSession = await response.json();
+        } catch (error) {
+          console.error("[mythos] session init failed", error);
+        } finally {
+          params.delete("lt");
+          const cleanUrl = window.location.pathname + (params.toString() ? `?${params}` : "");
+          window.history.replaceState({}, "", cleanUrl);
+        }
+      }
+
+      async function reportMythosUsage(reason) {
+        if (!state.mythosSession) return;
+        try {
+          await fetch("/api/mythos/report-usage", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              session_jti: state.mythosSession.sessionJti,
+              credits: 1,
+              reason
+            })
+          });
+        } catch (error) {
+          console.error("[mythos] failed to report usage", error);
+        }
+      }
 
       const logsEl = document.getElementById("logs");
       const jobBadgeEl = document.getElementById("job-badge");
@@ -590,6 +626,7 @@
         pollJob(payload.job_id, "analysis", (job) => {
           analysisLoadingEl.classList.add("hidden");
           analysisResultEl.classList.remove("hidden");
+          void reportMythosUsage("price-analysis");
           state.suggestedPrice = job.result.suggested_price;
           state.confirmedFinalPrice = null;
           suggestedPriceEl.textContent = formatCurrency(job.result.suggested_price);
@@ -654,6 +691,7 @@
         pollJob(payload.job_id, "publish", (job) => {
           publishLoadingEl.classList.add("hidden");
           publishResultEl.classList.remove("hidden");
+          void reportMythosUsage("listing-publish");
           publishStatusEl.textContent = job.result.listing_status || "completed";
           publishNotesEl.textContent = job.result.notes || "";
           if (job.result.public_url) {
@@ -676,6 +714,7 @@
 
       resetJobUi();
       showView("landing");
+      void initMythosFromUrl();
     </script>
   </body>
 </html>
