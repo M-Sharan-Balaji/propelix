@@ -9,3 +9,5 @@ services:
     envVars:
       - key: TINYFISH_API_KEY
         sync: false
+      - key: MYTHOS_LISTING_ID
+        sync: false
